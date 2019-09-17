@@ -1,0 +1,2 @@
+"jobName","logFile","filePath"," realFilePath","datasetFile","realDatasetFilePath","recordType"
+"TEST_HEADER","SOC-CLIPIprdTEST_HEADERlog.txt","\(2)\(2)0\(1)\(3)file\(2)/work/home/dsprd1/applications/soc/clipi/datastage/tmp/Upload/test_header.csv\(2)0"," ","NaN","NaN","CustomInput"
