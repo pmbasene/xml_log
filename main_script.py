@@ -21,15 +21,6 @@ Pour la documentation sur le package lxml consulter:
    - extraire les valeurs des cles(jobname, filename, directory) qui sont en format string ou variable depuis les fichiers XML.
    - recuperer leurs valeurs exactes en utilisant les jobnames des fichiers xml pour trouver leurs fichiers excecutables corespndantes.
 
-- Demarche:
-    1. Extraire tous les jobs d'un ou les fichier(s) xml du repertoire logFullDS  /ok
-        a. le resultat de cette operation va retourner une listes de tous les jobs trouve dans un fichier XML donnee.
-            note : l'objectif c'est de le faire avec tous les fichiers xml
-    2. Aller chercher dans les jobs correspondants dans les fichiers executables (les logs).
-        a. lire un par un tous les fichiers executables (log) qui sont le dossier logfullDS (faire une booucle for dans lequel with open sera appele)
-        b. ensuite toujours dans cette meme boucle for, parcourir la liste collectionJobFromXML et pour chaque element i (qui est en fait le nom du job recuperer dans le fichier xml) de cette liste tester si il est bien presence un des fichier log.
-            Si oui afficher le filename de ce fichier
-
 """
 # DOC-.xml
 
@@ -256,7 +247,7 @@ class ParseLog():
                             blockPar3 = list(set(blockPar3))
         return blockPar3
 
-# # ===================MAIN0 : nettoyage du dossier ===================================================
+### ===================MAIN0 : nettoyage du dossier ===================================================
 p = CleanFolder()
 
 content = p.cleaning_files()
@@ -329,30 +320,30 @@ logfilepd = []
 tuple_job_logfilepd = []
 
 # # +++++++++++====================== creation table :job - logfile - pk =====================
-# for logfile in os.listdir(path_to_logfullDS):
-#     with open(logfile, encoding='utf8') as f:
-#         f = f.read()
-#         for idx, jobFromXML in enumerate(collectionJobFromXML):
-#             if jobFromXML in f:
-#                 compt += 1
-#                 # print(f"job {compt}/{len(collectionJobFromXML)} {jobFromXML} -->{logfile}")
-#                 job_logfile = (jobFromXML, logfile)
-#                 tuple_job_logfilepd.append(job_logfile)
+    # for logfile in os.listdir(path_to_logfullDS):
+    #     with open(logfile, encoding='utf8') as f:
+    #         f = f.read()
+    #         for idx, jobFromXML in enumerate(collectionJobFromXML):
+    #             if jobFromXML in f:
+    #                 compt += 1
+    #                 # print(f"job {compt}/{len(collectionJobFromXML)} {jobFromXML} -->{logfile}")
+    #                 job_logfile = (jobFromXML, logfile)
+    #                 tuple_job_logfilepd.append(job_logfile)
 
-# for i in range(len(tuple_job_logfilepd)):
-#     jobFromXMLpd.append(tuple_job_logfilepd[i][0])
-#     logfilepd.append(tuple_job_logfilepd[i][1])
+    # for i in range(len(tuple_job_logfilepd)):
+    #     jobFromXMLpd.append(tuple_job_logfilepd[i][0])
+    #     logfilepd.append(tuple_job_logfilepd[i][1])
 
-# pk = random.sample(range(1000), len(tuple_job_logfilepd))
+    # pk = random.sample(range(1000), len(tuple_job_logfilepd))
 
-# dt0 ={
-#     'pk':pk,
-#     'jobFromXML': jobFromXMLpd,
-#     'logfile': logfilepd,
-# }
+    # dt0 ={
+    #     'pk':pk,
+    #     'jobFromXML': jobFromXMLpd,
+    #     'logfile': logfilepd,
+    # }
 
-# df0 = pd.DataFrame(dt0)
-# print(df0)
+    # df0 = pd.DataFrame(dt0)
+    # print(df0)
 
 # # # ============================ 
 
