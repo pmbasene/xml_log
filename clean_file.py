@@ -27,8 +27,8 @@ class CleanFolder():
         self.path_to_files =  path_to_files
 
 
-    def __str__(self):
-        return self.path_to_files
+    # def __str__(self):
+    #     return self.path_to_files      # a decommenter pour voir le path
 
     def moveToTheFolder(self):
         pass

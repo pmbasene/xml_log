@@ -46,7 +46,7 @@ class Xml_logfile():
     def document(self, fileXML="SUPprd.xml"):
         basePath = os.path.dirname(__file__)
         fullPath = os.path.join(basePath, fileXML)
-        print(fullPath)
+        # print(fullPath)
         return fullPath
     
     

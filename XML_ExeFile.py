@@ -45,7 +45,7 @@ class ParseElementXML():
         #     return fullPath
         # except OSError:
         #     return "verifier bien le path du fichier. Il doit etre dans le dossier"
-        print(fullPath)
+        # print(fullPath)
         return fullPath
 
     def getRoot(self, fullPath):

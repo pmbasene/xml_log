@@ -1,59 +1,63 @@
 #!/anaconda3/bin/python
 # coding: utf-8
 
+import os
 from lxml import etree
 import xml.etree.ElementTree as ET
-import os
 import numpy as np
 import pandas as pd
-import random
+from pprint import pprint
+# import random
 # from XML_HANDLE import *
-# ou
+
 from XML_HANDLE import Xml_logfile
 from clean_file import CleanFolder
 
 """ 
-- inclure le scrip clean file.py en en-tete afin de nottoyer le dossier 
-Pour la documentation sur le package lxml consulter: 
-- https://docs.python.org/3.4/library/xml.etree.elementtree.html#module-xml.etree.ElementTree
+DESCRIPTION DES MODULES
+--------------------------
+Modules :
+- lxml: permet de parser les fichiers xml. 
+Pour plus d'infos rtfm la documentation sur le package lxml consulter:  https://docs.python.org/3.4/library/xml.etree.elementtree.html#module-xml.etree.ElementTree   ;)
+- Pandas et Numpy permettent de travailler sur des dataframes et de manipuler les donnees plus facilement.
+- clean_file.py permet de nettoyer au prealable le dossier qui contient les excecutables.
 
-- Ce que je dois faire :
-   - extraire les valeurs des cles(jobname, filename, directory) qui sont en format string ou variable depuis les fichiers XML.
-   - recuperer leurs valeurs exactes en utilisant les jobnames des fichiers xml pour trouver leurs fichiers excecutables corespndantes.
-
-- Demarche:
-    1. Extraire tous les jobs d'un ou les fichier(s) xml du repertoire logFullDS  /ok
-        a. le resultat de cette operation va retourner une listes de tous les jobs trouve dans un fichier XML donnee.
-            note : l'objectif c'est de le faire avec tous les fichiers xml
-    2. Aller chercher dans les jobs correspondants dans les fichiers executables (les logs).
-        a. lire un par un tous les fichiers executables (log) qui sont le dossier logfullDS (faire une booucle for dans lequel with open sera appele)
-        b. ensuite toujours dans cette meme boucle for, parcourir la liste collectionJobFromXML et pour chaque element i (qui est en fait le nom du job recuperer dans le fichier xml) de cette liste tester si il est bien presence un des fichier log.
-            Si oui afficher le filename de ce fichier
+Taches :
+- extraire les valeurs des cles(jobname, filename, directory) qui sont en format string ou variable depuis les fichiers XML.
+- recuperer leurs valeurs exactes en utilisant les jobnames des fichiers xml pour trouver leurs fichiers excecutables corespndantes.
 
 """
-# DOC-.xml
+
 
 class ParseElementXML():
-    """cette classe prend en entree le nom du fichier XML a parser et pretourne une colletction (format liste)nommé collectionJobFromXML des jobs dun fichier XML
-    Note: le fichier XML doit etre dans le meme dossier que le fichier py """
+    """cette classe a ete creee dans l'optique de faciliter l'extraction de données à partir d'un fichier de format XML.
+    Elle comporte un ensemble de fonctions qui permettent de recuperer, manipuler, et extraire à partir du xml-projet
 
-    def document(self, fileXML="SUPprd.xml"):
+    Note: Pour l'instant afin d'eviter toutes erreurs d'excecution, les fichier XML doivent etre dans le meme dossier que le prog  main_scrpit.py """
+
+    def document(self, fileProjetXML="SUPprd.xml"):
         #DOC-FTSACprd.xml, SUPprd.xml , MGTPRD.xml
-        basePath = os.path.dirname(__file__)
-        fullPath = os.path.join(basePath, fileXML)
-        # ---------------------------------------------------------------------,
+        """cette fonction prend en input le nom du fichier .xml et renvoie le path absolu. Ce dernier sera utilise aussi en input par la fonction 
+        getroot() pour instancier le module lmxl.etree """
+        basePath = os.path.dirname(
+            __file__)    # path abs du dossier de ce file
+        fullPath = os.path.join(basePath, fileProjetXML)
+        # fullPath = os.path.abspath(fileProjetXML)
+        # os.chdir(fullPath)
+        # # ---------------------------------------------------------------------,
         # try:
         #     basePath = os.path.dirname(__file__)
-        #     fullPath = os.path.join(basePath, fileXML)
+        #     fullPath = os.path.join(basePath, fileProjetXML)
         #     print(fullPath)
-        #     return fullPath
+        # return fullPath
         # except OSError:
-        #     return "verifier bien le path du fichier. Il doit etre dans le dossier"
+        # return "verifier bien le path du fichier. Il doit etre dans le dossier"
         # __________________________________#
         # print(fullPath)
         return fullPath
 
     def getRoot(self, fullPath):
+        """getroot() prend en input le path absolu un objet appele root """
         tree = etree.parse(fullPath)
         root = tree.getroot()
         # print(root.tag, root.attrib)
@@ -68,8 +72,10 @@ class ParseElementXML():
         for i in listDoublons:
             if i not in liste:
                 liste.append(i)
+        # return liste
+        # liste = [liste.append(x) for x in listDoublons if x not in liste]   # list method comprehension
         return liste
- 
+
     def recupererCleOuValeurInString(self, string, sep=" "):
         '''cette fonction prend en entree une chaine de caractere <str>  
         et un separateur(= ou , ou ; ou : etc) et retourne la cle et la valeur de la chaine splitee'''
@@ -79,13 +85,12 @@ class ParseElementXML():
         return Key, Val
 
     def recuperer_PAR_dir(self, string):
-        """ cette fonction prend en entree une la valeur du file du xML (format string) et retourne une liste d'elements filtree(format list).
-        Le role de cette fonction est d'abord de spliter une chaine de caractere avec comme separator # pris en entree, ensuite filter tous les items non desirables 
-        tel items vide , underscore , etc, et retourne que les variable repertoires du logfile  """
+        """ cette fonction prend en entree le file xML (format string) et retourne une liste d'elements filtres (format list).
+        Comment ca marche : Elle splite d'abord une chaine de caractere en se basant sur le separator # qui est donne en entree, ensuite filtre tous les items non desirables 
+        tels que les items vides, underscore, etc. et retourne finalement que les variables-repertoires du logfile  """
         PAR_list = []                            # RESULTAT A RECUPERER COMME RETURN DE LA FONCTION
         # LIST DES CARACTERES EXCLUS COMME PREMIER ITEM DE LA LISTE
         caract_exclu = ['', '_']
-
         result = string.split("\\")
         for res in result:
             if 'PAR' in res:
@@ -119,7 +124,9 @@ class ParseElementXML():
             return realFilePath+extension
 
     def makePathForFileOrFileDataset(self, filePath, PAR_list):
-        realFilePath = ""
+        """ cette fonction prend en input le filePath cad la liste des key-repertoire des chemins PATH des files,...  """
+
+        realFilePath = " "
         if len(filePath) == 1:
             realFilePath = os.path.join(filePath[0])
             realFilePath = self.buildFullPath(PAR_list, realFilePath)
@@ -130,22 +137,35 @@ class ParseElementXML():
 
         elif len(filePath) == 3:
             realFilePath = os.path.join(filePath[0], filePath[1], filePath[2])
-            realFilePath = self.buildFullPath(PAR_list,realFilePath)
-           
+            realFilePath = self.buildFullPath(PAR_list, realFilePath)
+
         elif len(filePath) == 4:
-            realFilePath = os.path.join(filePath[0], filePath[1], filePath[2], filePath[3])
-            realFilePath = self.buildFullPath(PAR_list,realFilePath)
-           
+            realFilePath = os.path.join(
+                filePath[0], filePath[1], filePath[2], filePath[3])
+            realFilePath = self.buildFullPath(PAR_list, realFilePath)
+
         elif len(filePath) == 5:
-            realFilePath = os.path.join(filePath[0], filePath[1], filePath[2], filePath[3], filePath[4])
-            realFilePath = self.buildFullPath(PAR_list,realFilePath)
-           
+            realFilePath = os.path.join(
+                filePath[0], filePath[1], filePath[2], filePath[3], filePath[4])
+            realFilePath = self.buildFullPath(PAR_list, realFilePath)
+
+        elif len(filePath) == 6:
+            realFilePath = os.path.join(
+                filePath[0], filePath[1], filePath[2], filePath[3], filePath[4], filePath[5])
+            realFilePath = self.buildFullPath(PAR_list, realFilePath)
+
+        elif len(filePath) == 7:
+            realFilePath = os.path.join(
+                filePath[0], filePath[1], filePath[2], filePath[3], filePath[4], filePath[5], filePath[5])
+            realFilePath = self.buildFullPath(PAR_list, realFilePath)
+
         # else:
         #     fileValueTrueRecord.append(None)
 
         return realFilePath
 
     def retrieveFilePath(self, fileValue, blockTextPar):
+        '''cette fonction prend en entree le fichier(file trouvé dans le xml) '''
         # les filepath fonctionnent correctement si le bloc est au debut du logfile. donc il me faut trouver une solution pour resoudre le cas ou le boc est a une ligne x du logfile. pour cela se referer a la variable PAR
         filePath = []
         # recuperation des parametres directory
@@ -163,7 +183,7 @@ class ParseElementXML():
                     if par == kline:
                         filePath.append(vline)
 
-        return PAR_list ,filePath 
+        return PAR_list, filePath
 
     def funcname(self, *param):
         #
@@ -171,8 +191,8 @@ class ParseElementXML():
 
         if PropertyOrcollection.tag == 'Collection' and PropertyOrcollection.attrib.get("Name") == 'Properties':
             # attribute_Name = PropertyOrcollection.attrib.get('Name')
-            
-            for subrecord in PropertyOrcollection:     # ACCES NIVEAU 5 
+
+            for subrecord in PropertyOrcollection:     # ACCES NIVEAU 5
 
                  for prop in subrecord:
                     if prop.attrib.get('Name') == 'Value':
@@ -180,43 +200,58 @@ class ParseElementXML():
 
                         fileValue = Textprop
                         if (r')file' in fileValue) and (jobN == jobFromXML):
-
                             # print(fileValue)
-                            PAR_list, filePath = self.retrieveFilePath(fileValue, blockTextPar)
-                            realFilePath = self.makePathForFileOrFileDataset(filePath, PAR_list)
+                            PAR_list, filePath = self.retrieveFilePath( fileValue, blockTextPar)
+                            realFilePath = self.makePathForFileOrFileDataset(  filePath, PAR_list)
                             # print(realFilePath)
 
                             fileValueRecord.append(fileValue)
                             fileValueTrueRecord.append(realFilePath)
 
-                            tup = (jobN, logfile, fileValue, realFilePath,attribute_type)
+                            tup = (jobN, logfile, fileValue,
+                                   realFilePath, attribute_type)
                             tuple_Job_logfile_file_trueFile_attr.append(tup)
-                            # print(f"{jobN},{logfile},{fileValue},{realFilePath},NaN,NaN,NaN ,NaN,{attribute_type}")
-                            
+                            # print(
+                                # f"{jobN},{logfile},{fileValue},{realFilePath},NaN,NaN,NaN ,NaN,{attribute_type}")
                             # print(f"jobN, logfile, fileValue, realFilePath, datasetValue, realFilePathDataset, stageName, stageType,recordTypeRecord")
-
                             # return fileValueRecord, fileValueTrueRecord,
-
                             # print(tup)
 
                         datasetValue = Textprop
                         if ('.ds' in datasetValue) and (jobN == jobFromXML):
 
                              # print(realFilePathDataset)
-                            PAR_dataset_list, filePathDataset = self.retrieveFilePath(datasetValue, blockTextPar)
-                            realFilePathDataset = self.makePathForFileOrFileDataset(filePathDataset, PAR_dataset_list)
+                            PAR_dataset_list, filePathDataset = self.retrieveFilePath(
+                                datasetValue, blockTextPar)
+                            realFilePathDataset = self.makePathForFileOrFileDataset(
+                                filePathDataset, PAR_dataset_list)
 
                             datasetValueRecord.append(datasetValue)
                             datasetValueTrueRecord.append(realFilePathDataset)
-
-                            # print(f"{jobN},{logfile},NaN,NaN,{datasetValue},{realFilePathDataset},NaN,NaN,{attribute_type}")
+                            # print(
+                                # f"{jobN},{logfile},NaN,NaN,{datasetValue},{realFilePathDataset},NaN,NaN,{attribute_type}")
                             # print(f"jobN, logfile, fileValue, realFilePath, datasetValue, realFilePathDataset, stageName, stageType,recordTypeRecord")
-
-
-
                             #  return realFilePathDataset, datasetValueTrueRecord
-                
+
         return fileValueRecord, fileValueTrueRecord, datasetValueRecord, datasetValueTrueRecord, tuple_Job_logfile_file_trueFile_attr
+
+        # def funcname2(record):
+
+        #     for PropertyOrcollection in record:  # ACCES NIVEAU 4
+        #         attribute_Name = PropertyOrcollection.attrib.get('Name')
+
+        #         if attribute_Name == 'Name':
+        #             TextPropertyOrcollection = str(PropertyOrcollection.text)
+        #             stageName = TextPropertyOrcollection
+        #                             # print(f"{jobN}, {logfile}, NaN, NaN, NaN,  NaN, {stageName},NaN, {attribute_type}")
+        #                             # print(f"jobN, logfile, fileValue, realFilePath, datasetValue, realFilePathDataset, stageName, stageType,recordTypeRecord")
+
+        #         elif attribute_Name == 'StageType':
+        #             TextPropertyOrcollection = str(PropertyOrcollection.text)
+        #             stageType = TextPropertyOrcollection
+        #             # print(f"{jobN}, {logfile}, NaN, NaN, NaN, NaN, NaN,{stageType},{attribute_type}")
+        #             # print(f"jobN, logfile, fileValue, realFilePath, datasetValue, realFilePathDataset, stageName, stageType,recordTypeRecord")
+
 
 class ParseLog():
 
@@ -256,9 +291,9 @@ class ParseLog():
                             blockPar3 = list(set(blockPar3))
         return blockPar3
 
-# # ===================MAIN0 : nettoyage du dossier ===================================================
-p = CleanFolder()
 
+### ===================MAIN0 : nettoyage du dossier ===================================================
+p = CleanFolder()
 content = p.cleaning_files()
 ### affichage
 # print("------ traitement1: Resultat nettoyage du dossier {} !!!!------".format(p))
@@ -269,29 +304,27 @@ for i in content:
 
 # # ===================MAIN1===================================================
 ### Initiation des listes suivants en vue de creeer un dataframe en output
-# jobName = []
-# stageName = []
-# stageType = []
-# recordType = []
-# fileName = []
-# fileNameTrue = []
+
 datasetName = []
 datasetValueTrue = []
 logFile = []
-
 # Initialisation du tuple file_job: relier les logfile au jobname
 tuple_Job_logfile_file_trueFile_attr = []
-
 #compteur
 num_job = []  # nombre de job pour un fic XML donnee
 num_stage = []  # nombre de job pour un fic XML donnee
 
-# basePath = os.path.dirname(__file__)
-# fullPath = os.path.join(basePath, "DOC-.xml")
-# print(fullPath)
-
 b = Xml_logfile()
-fullPath = b.document()
+
+
+fileProjetXML = "SUPprd.xml"
+filename, ext = os.path.splitext(fileProjetXML)
+
+###DOC-FTSACprd.xml, SUPprd.xml , MGTPRD.xml, SOC-CLIPIprd.xml, DOC-OCTAVprd.xml
+###UTIprd.xml Docprd.xml,SOC-OSCARprd.xml
+#no files in FTSACprd.xml ,DOC-OCTAVprd.xml, UTIprd.xml
+#1 file in SOC-CLIPIprd.xml
+fullPath = b.document(fileProjetXML)
 
 # Instanciation du module etree
 ## methode parse
@@ -302,7 +335,7 @@ root = tree.getroot()
 collectionJobFromXML = []
 
 p = ParseElementXML()
-fullPath = p.document()
+fullPath = p.document(fileProjetXML)
 root = p.getRoot(fullPath)
 
 # A decommenter.....
@@ -318,13 +351,11 @@ collectionJobFromXML.remove(None)
 
 ######## ======================== ======================
 
-
 q = ParseLog()
 path_to_logfullDS = q.changeDir()           # changement de repertoire
 tuple_job_logfile = []
 compt = 0
-
-jobFromXMLpd =[]
+jobFromXMLpd = []
 logfilepd = []
 tuple_job_logfilepd = []
 
@@ -338,13 +369,11 @@ tuple_job_logfilepd = []
 #                 # print(f"job {compt}/{len(collectionJobFromXML)} {jobFromXML} -->{logfile}")
 #                 job_logfile = (jobFromXML, logfile)
 #                 tuple_job_logfilepd.append(job_logfile)
-
 # for i in range(len(tuple_job_logfilepd)):
 #     jobFromXMLpd.append(tuple_job_logfilepd[i][0])
 #     logfilepd.append(tuple_job_logfilepd[i][1])
 
 # pk = random.sample(range(1000), len(tuple_job_logfilepd))
-
 # dt0 ={
 #     'pk':pk,
 #     'jobFromXML': jobFromXMLpd,
@@ -353,42 +382,43 @@ tuple_job_logfilepd = []
 
 # df0 = pd.DataFrame(dt0)
 # print(df0)
-
-# # # ============================ 
+# # # ============================
 
 print(f"jobName,logFile,filePath, realFilePath,datasetFile,realDatasetFilePath,stageName,stageType,recordType")
+# print(f"jobName,logFile,filePath, realFilePath,datasetFile,realDatasetFilePath,recordType")
 
+# print(f"{fileProjetXML}, jobFromXML, logfile")
 
 # print(jobN, logfile, fileValue, realFilePath, datasetValue, realFilePathDataset, attribute_type)
 
 
-
-
-# jobNameRecord = []
-# logFileRecord = []
-# stageNameRecord = []
-# stageTypeRecord = []
-# recordTypeRecord = []
 fileValueRecord = []
 fileValueTrueRecord = []
 datasetValueRecord = []
 datasetValueTrueRecord = []
 
+jobDict={}
+
 for logfile in os.listdir(path_to_logfullDS):
     with open(logfile, encoding='utf8') as f:
         f = f.read()
-        for idx,jobFromXML in enumerate(collectionJobFromXML):
-
+        for idx, jobFromXML in enumerate(collectionJobFromXML):
             if jobFromXML in f:
-                compt += 1
+             
                 # print(f"job {compt}/{len(collectionJobFromXML)} {jobFromXML} -->{logfile}")
-                # job_logfile = (idx, jobFromXML, logfile)
-                # tuple_job_logfile.append(job_logfile)
+
+                # print(f"SUPprd, {jobFromXML}, {logfile}")
+
+                ## Lister les projets, job, file
+                job_logfile = (filename, jobFromXML, logfile)
+                tuple_job_logfile.append(job_logfile)
+
                 # print(job_logfile)
                 # job_logFile[id] = tuple_job_logfile
 
-                blockTextPar = q.blockEventID(f)     # retourne un bloc de lignes de type (key,value) separe par le signe '=' dans lequel se trouve les repertoires
-                                                     # ce bloc sera utilise dans la section outupt file et permettra de trouver la valeur exacte du fileName et datasetName
+                # retourne un bloc de lignes de type (key,value) separe par le signe '=' dans lequel se trouve les repertoires
+                blockTextPar = q.blockEventID(f)
+                # ce bloc sera utilise dans la section outupt file et permettra de trouver la valeur exacte du fileName et datasetName
                 jobNameRecord = []
                 logFileRecord = []
                 stageNameRecord = []
@@ -398,39 +428,60 @@ for logfile in os.listdir(path_to_logfullDS):
                 for job in root:  # ACCES NIVEAU 2
                     jobN = job.attrib.get('Identifier')
 
-                    for record in job: #ACCES NIVEAU 3
+                    for record in job:  # ACCES NIVEAU 3
+                        stageList= []
 
                         attribute_type = record.attrib.get('Type')
+                        attribute_identifier = record.attrib.get('Identifier')
 
                         if attribute_type == 'CustomStage':
-                           
+                            jobDict['job'] = jobN
+
                             jobNameRecord.append(jobN)     # col 1
                             logFileRecord.append(logfile)     # col 1
                             recordTypeRecord.append(attribute_type)    # col 4
-
-                            for PropertyOrcollection in record:    #ACCES NIVEAU 4
+                            
+                            for PropertyOrcollection in record:  # ACCES NIVEAU 4
 
                                 attribute_Name = PropertyOrcollection.attrib.get('Name')
 
                                 if attribute_Name == 'Name':
                                     TextPropertyOrcollection = str(PropertyOrcollection.text)
                                     stageName = TextPropertyOrcollection
-                                    print(f"{jobN}, {logfile}, NaN, NaN, NaN,  NaN, {stageName},NaN, {attribute_type}")
+                                    # print(f"{jobN}, {logfile}, NaN, NaN, NaN,  NaN, {stageName},NaN, {attribute_type}")
                                     # print(f"jobN, logfile, fileValue, realFilePath, datasetValue, realFilePathDataset, stageName, stageType,recordTypeRecord")
-          
-
+                                    # print(stageName)
                                 elif attribute_Name == 'StageType':
-                                    TextPropertyOrcollection = str(PropertyOrcollection.text)
-                                    stageType = TextPropertyOrcollection
-                                    print(f"{jobN}, {logfile}, NaN, NaN, NaN, NaN, NaN,{stageType},{attribute_type}")
-
+                                    stageType = str(PropertyOrcollection.text)
+                                    # print(stageType)
+                                    # print(f"{jobN}, {logfile}, NaN, NaN, NaN, NaN, NaN,{stageType},{attribute_type}")
                                     # print(f"jobN, logfile, fileValue, realFilePath, datasetValue, realFilePathDataset, stageName, stageType,recordTypeRecord")
+                                elif attribute_Name == 'InputPins':
+                                    idxs = str(PropertyOrcollection.text)          # idxs ---> identifianr
+                                    if r"|" in idxs:
+                                        idInput = idxs.split('|')       # les id des inputs
+                                    else:
+                                        idInput = idxs
+                                    # print(jobN,'--',stageType,'--', stageName,'--',idInput,'(I)')
+                                    # jobDict[jobN]=idInput
 
+                                elif attribute_Name == 'OutputPins':
+                                    idxs = str(PropertyOrcollection.text)          # idxs ---> identifianr
+                                    if r"|" in idxs:
+                                        idOutput = idxs.split('|')
+                                    else:
+                                        idOutput = idxs
+                                    # print(jobN,'--', stageName,'--',idOutput,'(O)')
+                                    # jobDict[jobN]=idOutput
+                                # print(jobN,'--',stageType, stageName,'--',idInput,'(I)')                                
+                                
                                 # col 1
-
-                            stageNameRecord.append(stageName)                                        # col 1
-                            stageTypeRecord.append(stageType)                                        # col 1
-                        elif attribute_type == 'CustomOutput':
+                            # # col 1
+                            # stageNameRecord.append(stageName)
+                            # # col 1
+                            # stageTypeRecord.append(stageType)
+                        elif (attribute_type == 'CustomOutput') and (attribute_identifier in idOutput):
+                            
 
                             jobNameRecord.append(jobN)     # col 1
                             logFileRecord.append(logfile)     # col 1
@@ -439,10 +490,10 @@ for logfile in os.listdir(path_to_logfullDS):
                             stageTypeRecord.append(None)     # col 1
 
                             for PropertyOrcollection in record:
-                                
+
                                 fileValueRecord, fileValueTrueRecord, realFilePathDataset, datasetValueTrueRecord, tuple_Job_logfile_file_trueFile_attr = p.funcname(
                                     PropertyOrcollection, fileValueRecord, fileValueTrueRecord, datasetValueRecord, datasetValueTrueRecord)
-                                                                                                                               
+
                                 # print(jobN,logfile+"-->filePath",len(filePath), filePath)
                         elif attribute_type == 'CustomInput':
 
@@ -453,7 +504,7 @@ for logfile in os.listdir(path_to_logfullDS):
                             stageTypeRecord.append(None)     # col 1
 
                             for PropertyOrcollection in record:
-                                
+
                                 fileValueRecord, fileValueTrueRecord, realFilePathDataset, datasetValueTrueRecord, tuple_Job_logfile_file_trueFile_attr = p.funcname(
                                     PropertyOrcollection, fileValueRecord, fileValueTrueRecord, datasetValueRecord, datasetValueTrueRecord)
 
@@ -462,74 +513,95 @@ for logfile in os.listdir(path_to_logfullDS):
                 pass
 
 
-# print("lignes:",len(jobNameRecord))
-# tuple1_Job_logfile_recordType = []
-# for k in  range(len(jobNameRecord)):
- 
-#     tupl = (jobNameRecord[k], logFileRecord[k], recordTypeRecord[k])
-#     tuple1_Job_logfile_recordType.append(tupl)
-
-    
-# # print(tuple_Job_logfile_file_trueFile_attr)
-# # print(tuple1_Job_logfile_recordType)
-# print('')
-# print(len(tuple_Job_logfile_file_trueFile_attr))   #243
-# print(len(tuple1_Job_logfile_recordType))     # 3433
-
-# l1 = []
-# l1True= []
-# for j in range(len(tuple_Job_logfile_file_trueFile_attr)):
-#     T_job =  tuple_Job_logfile_file_trueFile_attr[j][0]
-#     T_jobFile = tuple_Job_logfile_file_trueFile_attr[j][1]
-
-#     T_attr = tuple_Job_logfile_file_trueFile_attr[j][4]
-
-#     T_fileValue = tuple_Job_logfile_file_trueFile_attr[j][2]
-#     T_trueFileValue = tuple_Job_logfile_file_trueFile_attr[j][3]
-
-#     T = (T_job,T_jobFile,T_attr)
-#     # print(T)
-#     for triplet in tuple1_Job_logfile_recordType:
-
-#         # print("tripet", triplet)
-#         print("T", T)
-
-#         if T == triplet:
-#             # print(T)
-#             # print(triplet)
-            
-
-#             l1.append(T_fileValue)
-#             l1True.append(T_trueFileValue)
-
-
-
-# print(len(l1))
-# print(len(l1True))
+pprint(jobDict)
 
 
 
 
 
-# print(f"jobNameRecord: {len(jobNameRecord)}\n, logFileRecord: {len(logFileRecord)},\n stageName: {len(stageNameRecord)}, \n stageType: {len(stageTypeRecord)},\n \
-#     recordType: {len(recordTypeRecord)} ,\n fileValueRecord: {len(fileValueRecord)},\n fileValueTrueRecord: {len(fileValueTrueRecord)},\
-#       \n  datasetValueRecord: {len(datasetValueRecord)} ,\n datasetValueTrueRecord: {len(datasetValueTrueRecord)} \n")
+
+
+
+
+
+
+
+# ### a decommenter pour avoir la table 'projet', 'job', 'file'
+# # print(tuple_job_logfile)
+# # labels = ['projet', 'job', 'file']
+# # df =pd.DataFrame(tuple_job_logfile, columns=labels)
+# # # idx = df.index
+# # # idx +=1
+# # # print(idx)
+# # df.index = np.arange(1, len(df)+1)
+# # print(df.head())
+# # df.to_csv(f'/Users/ganasene/Desktop/resultats_xml/output{fileProjetXML}.csv')
+
+
+# # print("lignes:",len(jobNameRecord))
+# # tuple1_Job_logfile_recordType = []
+# # for k in  range(len(jobNameRecord)):
+
+# #     tupl = (jobNameRecord[k], logFileRecord[k], recordTypeRecord[k])
+# #     tuple1_Job_logfile_recordType.append(tupl)
+
+
+# # # print(tuple_Job_logfile_file_trueFile_attr)
+# # # print(tuple1_Job_logfile_recordType)
+# # print('')
+# # print(len(tuple_Job_logfile_file_trueFile_attr))   #243
+# # print(len(tuple1_Job_logfile_recordType))     # 3433
+
+# # l1 = []
+# # l1True= []
+# # for j in range(len(tuple_Job_logfile_file_trueFile_attr)):
+# #     T_job =  tuple_Job_logfile_file_trueFile_attr[j][0]
+# #     T_jobFile = tuple_Job_logfile_file_trueFile_attr[j][1]
+
+# #     T_attr = tuple_Job_logfile_file_trueFile_attr[j][4]
+
+# #     T_fileValue = tuple_Job_logfile_file_trueFile_attr[j][2]
+# #     T_trueFileValue = tuple_Job_logfile_file_trueFile_attr[j][3]
+
+# #     T = (T_job,T_jobFile,T_attr)
+# #     # print(T)
+# #     for triplet in tuple1_Job_logfile_recordType:
+
+# #         # print("tripet", triplet)
+# #         print("T", T)
+
+# #         if T == triplet:
+# #             # print(T)
+# #             # print(triplet)
+
+
+# #             l1.append(T_fileValue)
+# #             l1True.append(T_trueFileValue)
+
+# # print(len(l1))
+# # print(len(l1True))
+
+
+# print(f"jobNameRecord: {len(jobNameRecord)}\n, logFileRecord: {len(logFileRecord)},\n \
+#     stageName: {len(stageNameRecord)}, \n stageType: {len(stageTypeRecord)},\n \
+#     recordType: {len(recordTypeRecord)} ,\n fileValueRecord: {len(fileValueRecord)},\n \
+#     fileValueTrueRecord: {len(fileValueTrueRecord)},\n  datasetValueRecord: {len(datasetValueRecord)} \
+#     ,\n datasetValueTrueRecord: {len(datasetValueTrueRecord)} \n")
 # # print(f"\t\t\t. jobNameRecord, {jobNameRecord} \n, logFileRecord ,{logFileRecord} \n , stageName: {stageNameRecord} \n,stageType: {len(stageTypeRecord)}, \n 'recordType':{recordTypeRecord} \n")
 
-
-# # # print("|----Informations sur les elements extraits de ce fichier XML---|")
-# # # print("1./Nombre de jobs dans ce fichier:", len())
-# # # print("2./Nombre de stage dans ce fichier:", len(stageName))
-# # # print("3./Nombre de stageType dans ce fichier:", len(stageType))
+# # # # print("|----Informations sur les elements extraits de ce fichier XML---|")
+# # # # print("1./Nombre de jobs dans ce fichier:", len())
+# # # # print("2./Nombre de stage dans ce fichier:", len(stageName))
+# # # # print("3./Nombre de stageType dans ce fichier:", len(stageType))
+# # # # # # print("4./Nombre de fileName de ce fichier:", len(fileName))
+# # # # print("4./Nombre de logFile de ce fichier:", len(logFile))
 # # # # # print("4./Nombre de fileName de ce fichier:", len(fileName))
-# # # print("4./Nombre de logFile de ce fichier:", len(logFile))
-# # # # print("4./Nombre de fileName de ce fichier:", len(fileName))
-# # # # print("4./Nombre de datasetName de ce fichier:", len(datasetName))
-# # # # print("5./Nombre de fileNameTrue de ce fichier:", len(fileNameTrue))
-# # # # print("5./Nombre de datasetValueTrue de ce fichier:", len(datasetValueTrue))
-# # # print("5./Nombre de recordType de ce fichier:", len(recordType))
-# # # # # print("6./Nombre de datasetValue de ce fichier:", len(datasetValueTrue),datasetValueTrue)
-# # # # # # print('\n')
+# # # # # print("4./Nombre de datasetName de ce fichier:", len(datasetName))
+# # # # # print("5./Nombre de fileNameTrue de ce fichier:", len(fileNameTrue))
+# # # # # print("5./Nombre de datasetValueTrue de ce fichier:", len(datasetValueTrue))
+# # # # print("5./Nombre de recordType de ce fichier:", len(recordType))
+# # # # # # print("6./Nombre de datasetValue de ce fichier:", len(datasetValueTrue),datasetValueTrue)
+# # # # # # # print('\n')
 
 
 # data ={
@@ -546,4 +618,11 @@ for logfile in os.listdir(path_to_logfullDS):
 
 # df = pd.DataFrame(data)
 # # print(df)
-# # df.to_csv('/Users/ganasene/Desktop/resultats_xml/outputxml_input_output_stage.csv')
+
+
+# sel = df.loc[df["recordType"] != "CustomOutput"]
+# sel1 = sel.loc[df["recordType"] != "CustomInput"]
+# sel1.index = np.arange(1, len(sel1)+1)
+# # print(sel1.head())
+# # sel1.to_csv("/Users/ganasene/Desktop/resultats_xml/output1_MGTPRD_bon.csv")
+# sel1.to_csv(f'/Users/ganasene/Desktop/resultats_xml/output1_{filename}.csv')
