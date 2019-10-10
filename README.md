@@ -1,5 +1,5 @@
 # xml_log
-Ce repository contient l'ensemble des programmes (.py) et resulats (.csv) du parsing des projets (.xml) et des executables(...log.txt).
+Ce repository contient l'ensemble des programmes (.py) et resulats (.csv) du parsing des projets (.xml).
 L'objectif est d'extraire sous forme de table ....
 
 ## Process:
